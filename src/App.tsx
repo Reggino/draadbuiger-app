@@ -1,26 +1,31 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
 
-const App = () => {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+interface IAppState {
+  time: number;
 }
 
-export default App;
+export default class App extends React.Component<{}, IAppState> {
+  public state: IAppState = { time: 0 };
+  private intervalTimer?: number;
+
+  componentDidMount(): void {
+    this.intervalTimer = (setInterval(this.refresh, 100) as any) as number;
+  }
+
+  componentWillUnmount(): void {
+    clearInterval(this.intervalTimer);
+  }
+
+  private refresh = () => {
+    this.setState({ time: this.state.time + 1 });
+  };
+
+  public render() {
+    return (
+      <div className="App">
+        <img src={`http://draadbuigpi/image?${this.state.time}`} alt="" />
+      </div>
+    );
+  }
+}
