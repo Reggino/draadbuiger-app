@@ -32,7 +32,7 @@ export default class ExampleApp extends React.PureComponent<
       second: {
         direction: "column",
         first: "cam",
-        second: "test2"
+        second: "instructionsVisualizer"
       },
       splitPercentage: 80
     }
@@ -175,8 +175,8 @@ export default class ExampleApp extends React.PureComponent<
                                 .getInstructions(
                                   createGeometry(dxfData.entities[entityIndex])
                                 )
-                                .slice(0, instructionIndex + 1)
-                                .map(instructionVisualizer.processInstruction);
+                                .slice(0, instructionIndex + 1);
+                              // .map(instructionVisualizer.processInstruction);
                               setInstructionIndex(instructionIndex);
                             }}
                           />
@@ -200,20 +200,15 @@ export default class ExampleApp extends React.PureComponent<
           </div>
         );
 
-      default:
+      case "instructionsVisualizer":
         return (
-          <MosaicWindow
-            title={`Window ${count}`}
-            path={path}
-            onDragStart={() => console.log("MosaicWindow.onDragStart")}
-            onDragEnd={type => console.log("MosaicWindow.onDragEnd", type)}
-          >
-            <div className="example-window">
-              <h1>{`Window ${count}`}</h1>
-            </div>
-            )}
-          </MosaicWindow>
+          <div>
+            <canvas id="instructionsVisualizer"></canvas>
+          </div>
         );
+
+      default:
+        return <div>Not yet implemented</div>;
     }
   };
 

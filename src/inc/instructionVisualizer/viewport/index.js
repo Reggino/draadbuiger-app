@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { getRenderer } from "./renderer";
 import camera from "./camera";
 import scene from "./scene";
+import { InstructionVisualizer } from "../index";
 
 /**
  * @author qiao / https://github.com/qiao
@@ -947,11 +948,14 @@ export function init() {
 }
 
 let renderer;
-try {
-  renderer = getRenderer();
-} catch (e) {
-  console.log(e);
-}
+setTimeout(() => {
+  try {
+    renderer = getRenderer();
+  } catch (e) {
+    console.log(e);
+  }
+}, 1000);
+
 
 export function render() {
   if (renderer && scene && camera) {
