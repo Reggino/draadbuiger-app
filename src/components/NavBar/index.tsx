@@ -5,7 +5,13 @@ import "./index.scss";
 import { DxfContext } from "../../provider/Dxf";
 
 export default () => {
-  const { setDxfDataFromText } = useContext(DxfContext);
+  const {
+    entityIndex,
+    setEntityIndex,
+    dxfData,
+    setInstructionIndex,
+    setDxfDataFromText
+  } = useContext(DxfContext);
   return (
     <div className={`${Classes.NAVBAR} ${Classes.DARK}`}>
       <div className={Classes.NAVBAR_GROUP}>
@@ -52,14 +58,19 @@ export default () => {
         <label className={`theme-selection ${Classes.LABEL} ${Classes.INLINE}`}>
           Draad:
           <HTMLSelect
-            value={""}
-            onChange={e => {
-              console.log(e);
+            value={entityIndex}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+              setEntityIndex(parseInt(e.target.value, 10));
+              setInstructionIndex(0);
             }}
           >
-            <option>draad</option>
-            <option>draad</option>
-            <option>draad</option>
+            {(dxfData ? dxfData.entities : []).map(
+              (entity: any, key: number) => (
+                <option value={key} key={key}>
+                  Draad {key} ({entity.handle})
+                </option>
+              )
+            )}
           </HTMLSelect>
         </label>
       </div>

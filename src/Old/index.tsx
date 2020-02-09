@@ -31,15 +31,6 @@ export default class App extends React.Component<{}> {
     });
   };
 
-  private onWireChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const entityIndex = parseInt(e.target.value, 10);
-    instructionVisualizer.setEntityIndex(entityIndex);
-    this.setState({
-      entityIndex,
-      instructionIndex: 0
-    });
-  };
-
   public render() {
     const { dxfData, entityIndex, instructionIndex } = this.context;
     const instructions: string[] = dxfData
@@ -52,22 +43,6 @@ export default class App extends React.Component<{}> {
       : null;
     return (
       <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">Draadbuiger</h1>
-          <form>
-            {dxfData && dxfData.entities && dxfData.entities.length ? (
-              <div>
-                <select onChange={this.onWireChange}>
-                  {dxfData.entities.map((entity: any, key: number) => (
-                    <option value={key} key={key}>
-                      Draad {key} ({entity.handle})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-          </form>
-        </header>
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div className="App-column">
             <header>
