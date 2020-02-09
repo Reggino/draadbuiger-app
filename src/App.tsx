@@ -1,223 +1,231 @@
-import axios from "axios";
-import DxfParser, { DxfData } from "dxf-parser";
-import * as React from "react";
-import { InstructionGenerator } from "./inc/instructionGenerator";
-import { InstructionVisualizer } from "./inc/instructionVisualizer";
-import { createGeometry } from "./inc/wire";
+import { Classes, HTMLSelect } from "@blueprintjs/core";
+import { IconNames } from "@blueprintjs/icons";
+import React from "react";
+import Old from "./Old";
 
-import "./App.css";
+import {
+  createBalancedTreeFromLeaves,
+  getLeaves,
+  Mosaic,
+  MosaicNode,
+  MosaicWindow,
+  MosaicZeroState
+} from "react-mosaic-component";
 
-// @ts-ignore
-const parser = new DxfParser();
-const instructionGenerator = new InstructionGenerator();
-const instructionVisualizer = new InstructionVisualizer();
+import { CloseAdditionalControlsButton } from "./CloseAdditionalControlsButton";
 
-interface AppState {
-  dxfData: DxfData;
-  entityIndex: number;
-  instructionIndex: number;
+import "@blueprintjs/core/src/blueprint.scss";
+// import "@blueprintjs/icons/src/blueprint-icons.scss";
+import "react-mosaic-component/react-mosaic-component.css";
+// import "../styles/index.less";
+// import "./example.less";
+
+// tslint:disable no-console
+
+// tslint:disable-next-line no-var-requires
+const { version } = require("../package.json");
+
+function classNames(...args: string[]) {
+  return args.join(" ");
 }
 
-export default class App extends React.Component<{}, AppState> {
-  state: AppState = {
-    dxfData: { entities: [{ vertices: [], handle: "-" }] },
-    instructionIndex: 0,
-    entityIndex: 0
+let windowCount = 3;
+
+export const THEMES = {
+  Blueprint: "mosaic-blueprint-theme"
+};
+
+export type Theme = keyof typeof THEMES;
+
+const additionalControls = React.Children.toArray([
+  <CloseAdditionalControlsButton />
+]);
+
+const EMPTY_ARRAY: any[] = [];
+
+export interface ExampleAppState {
+  currentNode: MosaicNode<number> | null;
+  currentTheme: Theme;
+}
+
+export default class ExampleApp extends React.PureComponent<
+  {},
+  ExampleAppState
+> {
+  state: ExampleAppState = {
+    currentNode: {
+      direction: "row",
+      first: 1,
+      second: {
+        direction: "column",
+        first: 2,
+        second: 3
+      },
+      splitPercentage: 80
+    },
+    currentTheme: "Blueprint"
   };
 
-  componentWillMount() {
-    instructionVisualizer.start();
-    axios.get("/resources/18_veel lijnen.dxf").then((res) => {
-      this.loadData(res.data);
-    });
-  }
-
-  private loadData = (data: string) => {
-    const dxfData: DxfData = parser.parseSync(data);
-    if (
-      !dxfData ||
-      !dxfData.entities ||
-      !dxfData.entities.find(
-        entity => entity.vertices && entity.vertices.length > 0
-      )
-    ) {
-      window.alert("DXF niet leesbaar");
-      return;
-    }
-    const entityIndex = 0;
-    instructionVisualizer.setDxfData(dxfData);
-    instructionVisualizer.processInstruction("S");
-    this.setState({
-      dxfData,
-      entityIndex,
-      instructionIndex: 0
-    });
-  };
-
-  private onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { files } = e.target;
-    if (!files || !files.length) {
-      alert("Please select a file!");
-      return;
-    }
-    // eslint-disable-next-line prefer-destructuring
-    const file = files[0];
-    const start = 0;
-    const stop = file.size - 1;
-    const reader = new FileReader();
-
-    // If we use onloadend, we need to check the readyState.
-    reader.onloadend = (evt: any) => {
-      if (!evt.target || !evt.target.readyState) {
-        return;
-      }
-      if (evt.target.readyState === FileReader.DONE) {
-        // DONE == 2
-        this.loadData(evt.target.result);
-      }
-    };
-
-    const blob = file.slice(start, stop + 1);
-    reader.readAsBinaryString(blob);
-  };
-
-  private onInstructionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { dxfData } = this.state;
-    if (!dxfData) {
-      return;
-    }
-    const instructionIndex = parseInt(e.currentTarget.value, 10);
-    instructionGenerator
-      .getInstructions(createGeometry(dxfData.entities[this.state.entityIndex]))
-      .slice(0, instructionIndex + 1)
-      .map(instructionVisualizer.processInstruction);
-    this.setState({
-      instructionIndex
-    });
-  };
-
-  private onWireChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const entityIndex = parseInt(e.target.value, 10);
-    instructionVisualizer.setEntityIndex(entityIndex);
-    this.setState({
-      entityIndex,
-      instructionIndex: 0
-    });
-  };
-
-  public render() {
-    const { dxfData } = this.state;
-    const instructions: string[] = dxfData
-      ? instructionGenerator.getInstructions(
-          createGeometry(dxfData.entities[this.state.entityIndex])
-        )
-      : [];
-    const file = instructions
-      ? new Blob([instructions.join("\n")], { type: "text/plain" })
-      : null;
+  render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">Draadbuiger</h1>
-          <form>
-            <div>
-              <input type="file" onChange={this.onFileChange} />
-            </div>
-            {dxfData && dxfData.entities && dxfData.entities.length ? (
-              <div>
-                <select onChange={this.onWireChange}>
-                  {dxfData.entities.map((entity, key) => (
-                    <option value={key} key={key}>
-                      Draad {key} ({entity.handle})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-          </form>
-        </header>
-        <div style={{ display: "flex", flexDirection: "row" }}>
-          <div className="App-column">
-            <header>
-              <h2 style={{ marginBottom: 18 }}>DXF data</h2>
-            </header>
-            <pre
-              style={{
-                display: "flex",
-                flex: 1,
-                textAlign: "left",
-                border: "1px solid",
-                overflow: "auto"
-              }}
-            >
-              {JSON.stringify(this.state.dxfData, null, "\t")}
-            </pre>
-          </div>
-          <div className="App-column">
-            <header>
-              {file ? (
-                <a href={URL.createObjectURL(file)} download="draadbuiger.txt">
-                  Downloaden
+      <React.StrictMode>
+        <div className="react-mosaic-example-app">
+          <div className={classNames(Classes.NAVBAR, Classes.DARK)}>
+            <div className={Classes.NAVBAR_GROUP}>
+              <div className={Classes.NAVBAR_HEADING}>
+                <a href="https://bitbucket.org/Reggino/draadbuiger-app/">
+                  Draadbuiger <span className="version">v{version}</span>
                 </a>
-              ) : null}
-              <h2 style={{ padding: 0, marginBottom: 0 }}>Buiginstructies</h2>
-              <ol
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  padding: 0,
-                  margin: 0
-                }}
-              >
-                <li
-                  style={{ listStyle: "none", display: "block", marginLeft: 8 }}
-                >
-                  (S)tart
-                </li>
-                <li
-                  style={{ listStyle: "none", display: "block", marginLeft: 8 }}
-                >
-                  (V)oeren
-                </li>
-                <li
-                  style={{ listStyle: "none", display: "block", marginLeft: 8 }}
-                >
-                  (B)uigen
-                </li>
-                <li
-                  style={{ listStyle: "none", display: "block", marginLeft: 8 }}
-                >
-                  (D)raaien
-                </li>
-              </ol>
-            </header>
-            <pre
-              style={{
-                flex: 1,
-                textAlign: "left",
-                border: "1px solid",
-                overflow: "auto"
-              }}
+              </div>
+            </div>
+            <div
+              className={classNames(Classes.NAVBAR_GROUP, Classes.BUTTON_GROUP)}
             >
-              {instructions.map((instruction, key) => (
-                <div key={key}>
-                  <label>
-                    <input
-                      type="radio"
-                      name="instruction"
-                      value={key}
-                      checked={this.state.instructionIndex === key}
-                      onChange={this.onInstructionChange}
-                    />
-                    {instruction}
-                  </label>
-                </div>
-              ))}
-            </pre>
+              <label
+                className={classNames(
+                  "theme-selection",
+                  Classes.LABEL,
+                  Classes.INLINE
+                )}
+              >
+                Theme:
+                <HTMLSelect
+                  value={this.state.currentTheme}
+                  onChange={e =>
+                    this.setState({
+                      currentTheme: e.currentTarget.value as Theme
+                    })
+                  }
+                >
+                  {React.Children.toArray(
+                    Object.keys(THEMES).map(label => <option>{label}</option>)
+                  )}
+                </HTMLSelect>
+              </label>
+              <div className="navbar-separator" />
+              <span className="actions-label">Example Actions:</span>
+              <button
+                className={classNames(
+                  Classes.BUTTON,
+                  Classes.iconClass(IconNames.GRID_VIEW)
+                )}
+                onClick={this.autoArrange}
+              >
+                Auto Arrange
+              </button>
+              <button
+                className={classNames(
+                  Classes.BUTTON,
+                  Classes.iconClass(IconNames.ARROW_TOP_RIGHT)
+                )}
+                onClick={this.addToTopRight}
+              >
+                Add Window to Top Right
+              </button>
+            </div>
           </div>
+          <Mosaic<number>
+            renderTile={(count, path) => {
+              console.log(count, path);
+              return (
+                <MosaicWindow<number>
+                  additionalControls={
+                    count === 3 ? additionalControls : EMPTY_ARRAY
+                  }
+                  title={`Window ${count}`}
+                  createNode={this.createNode}
+                  path={path}
+                  onDragStart={() => console.log("MosaicWindow.onDragStart")}
+                  onDragEnd={type =>
+                    console.log("MosaicWindow.onDragEnd", type)
+                  }
+                  renderToolbar={
+                    count === 2
+                      ? () => (
+                          <div className="toolbar-example">Custom Toolbar</div>
+                        )
+                      : null
+                  }
+                >
+                  {count === 1 ? (
+                    <Old />
+                  ) : (
+                    <div className="example-window">
+                      <h1>{`Window ${count}`}</h1>
+                    </div>
+                  )}
+                </MosaicWindow>
+              );
+            }}
+            zeroStateView={<MosaicZeroState createNode={this.createNode} />}
+            value={this.state.currentNode}
+            onChange={this.onChange}
+            onRelease={this.onRelease}
+            className={THEMES[this.state.currentTheme]}
+          />
         </div>
-      </div>
+      </React.StrictMode>
     );
   }
+
+  private onChange = (currentNode: MosaicNode<number> | null) => {
+    this.setState({ currentNode });
+  };
+
+  private onRelease = (currentNode: MosaicNode<number> | null) => {
+    console.log("Mosaic.onRelease():", currentNode);
+  };
+
+  private createNode = () => ++windowCount;
+
+  private autoArrange = () => {
+    const leaves = getLeaves(this.state.currentNode);
+
+    this.setState({
+      currentNode: createBalancedTreeFromLeaves(leaves)
+    });
+  };
+
+  private addToTopRight = () => {
+    let { currentNode } = this.state;
+    if (currentNode) {
+      // const path = getPathToCorner(currentNode, Corner.TOP_RIGHT);
+      // const parent = getNodeAtPath(
+      //   currentNode,
+      //   dropRight(path)
+      // ) as MosaicParent<number>;
+      // const destination = getNodeAtPath(currentNode, path) as MosaicNode<
+      //   number
+      // >;
+      // const direction: MosaicDirection = parent
+      //   ? getOtherDirection(parent.direction)
+      //   : "row";
+      // let first: MosaicNode<number>;
+      // let second: MosaicNode<number>;
+      // if (direction === "row") {
+      //   first = destination;
+      //   second = ++windowCount;
+      // } else {
+      //   first = ++windowCount;
+      //   second = destination;
+      // }
+      //
+      // currentNode = updateTree(currentNode, [
+      //   {
+      //     path,
+      //     spec: {
+      //       $set: {
+      //         direction,
+      //         first,
+      //         second
+      //       }
+      //     }
+      //   }
+      // ]);
+    } else {
+      currentNode = ++windowCount;
+    }
+
+    this.setState({ currentNode });
+  };
 }
