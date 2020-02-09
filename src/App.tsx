@@ -1,22 +1,17 @@
 import React from "react";
 import NavBar from "./components/NavBar";
-
-import {
-  createBalancedTreeFromLeaves,
-  getLeaves,
-  Mosaic,
-  MosaicNode,
-  MosaicWindow,
-  MosaicZeroState
-} from "react-mosaic-component";
-
+import { Mosaic, MosaicNode, MosaicWindow } from "react-mosaic-component";
 import "@blueprintjs/core/src/blueprint.scss";
 // import "@blueprintjs/icons/src/blueprint-icons.scss";
 import "react-mosaic-component/react-mosaic-component.css";
 import DxfProvider, { DxfContext } from "./provider/Dxf";
 import { MosaicBranch } from "react-mosaic-component/src/types";
-
-let windowCount = 3;
+import { createGeometry } from "./inc/wire";
+import { InstructionGenerator } from "./inc/instructionGenerator";
+import { InstructionVisualizer } from "./inc/instructionVisualizer";
+import { Button } from "@blueprintjs/core";
+const instructionGenerator = new InstructionGenerator();
+const instructionVisualizer = new InstructionVisualizer();
 
 export interface ExampleAppState {
   currentNode: MosaicNode<string> | null;
@@ -49,12 +44,11 @@ export default class ExampleApp extends React.PureComponent<
         return (
           <MosaicWindow
             title={`DXF data`}
-            createNode={this.createNode}
             path={path}
             onDragStart={() => console.log("MosaicWindow.onDragStart")}
             onDragEnd={type => console.log("MosaicWindow.onDragEnd", type)}
           >
-            <DxfContext.Consumer key={count}>
+            <DxfContext.Consumer>
               {context => (
                 <pre style={{ maxHeight: "100%", overflow: "auto" }}>
                   {JSON.stringify(context.dxfData, null, "\t")}
@@ -66,18 +60,136 @@ export default class ExampleApp extends React.PureComponent<
         break;
       case "instructions":
         return (
-          <MosaicWindow
-            title={`Window ${count}`}
-            createNode={this.createNode}
-            path={path}
-            onDragStart={() => console.log("MosaicWindow.onDragStart")}
-            onDragEnd={type => console.log("MosaicWindow.onDragEnd", type)}
-          >
-            <div className="example-window">
-              <h1>{`Window ${count}`}</h1>
-            </div>
-            )}
-          </MosaicWindow>
+          <DxfContext.Consumer>
+            {context => {
+              const {
+                dxfData,
+                entityIndex,
+                instructionIndex,
+                setInstructionIndex
+              } = context;
+              const instructions: string[] = dxfData
+                ? instructionGenerator.getInstructions(
+                    createGeometry(dxfData.entities[entityIndex])
+                  )
+                : [];
+              const file = instructions
+                ? new Blob([instructions.join("\n")], { type: "text/plain" })
+                : null;
+
+              return (
+                <MosaicWindow
+                  title={`Buiginstructies`}
+                  path={path}
+                  onDragStart={() => console.log("MosaicWindow.onDragStart")}
+                  onDragEnd={type =>
+                    console.log("MosaicWindow.onDragEnd", type)
+                  }
+                >
+                  <header>
+                    {file ? (
+                      <Button
+                        intent={"primary"}
+                        text={"Downloaden"}
+                        style={{ display: "block", margin: "8px auto" }}
+                        onClick={() => {
+                          window.location.href = URL.createObjectURL(file);
+                        }}
+                      />
+                    ) : null}
+                    <ol
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        padding: 0,
+                        margin: 0
+                      }}
+                    >
+                      <li
+                        style={{
+                          listStyle: "none",
+                          display: "block",
+                          marginLeft: 8
+                        }}
+                      >
+                        (S)tart
+                      </li>
+                      <li
+                        style={{
+                          listStyle: "none",
+                          display: "block",
+                          marginLeft: 8
+                        }}
+                      >
+                        (V)oeren
+                      </li>
+                      <li
+                        style={{
+                          listStyle: "none",
+                          display: "block",
+                          marginLeft: 8
+                        }}
+                      >
+                        (B)uigen
+                      </li>
+                      <li
+                        style={{
+                          listStyle: "none",
+                          display: "block",
+                          marginLeft: 8
+                        }}
+                      >
+                        (D)raaien
+                      </li>
+                    </ol>
+                  </header>
+                  <pre
+                    style={{
+                      flex: 1,
+                      textAlign: "left",
+                      border: "1px solid",
+                      overflow: "auto"
+                    }}
+                  >
+                    {instructions.map((instruction, key) => (
+                      <div key={key}>
+                        <label>
+                          <input
+                            type="radio"
+                            name="instruction"
+                            value={key}
+                            checked={instructionIndex === key}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => {
+                              const { dxfData, entityIndex } = this.context;
+                              if (!dxfData) {
+                                return;
+                              }
+                              const instructionIndex = parseInt(
+                                e.currentTarget.value,
+                                10
+                              );
+                              instructionGenerator
+                                .getInstructions(
+                                  createGeometry(dxfData.entities[entityIndex])
+                                )
+                                .slice(0, instructionIndex + 1)
+                                .map(instructionVisualizer.processInstruction);
+                              setInstructionIndex(instructionIndex);
+                            }}
+                          />
+                          {instruction}
+                        </label>
+                      </div>
+                    ))}
+                  </pre>
+                  )}
+                </MosaicWindow>
+              );
+            }}
+          </DxfContext.Consumer>
         );
         break;
 
@@ -85,7 +197,6 @@ export default class ExampleApp extends React.PureComponent<
         return (
           <MosaicWindow
             title={`Window ${count}`}
-            createNode={this.createNode}
             path={path}
             onDragStart={() => console.log("MosaicWindow.onDragStart")}
             onDragEnd={type => console.log("MosaicWindow.onDragEnd", type)}
@@ -106,7 +217,6 @@ export default class ExampleApp extends React.PureComponent<
           <NavBar />
           <Mosaic
             renderTile={this.renderTile}
-            zeroStateView={<MosaicZeroState createNode={this.createNode} />}
             value={this.state.currentNode}
             onChange={this.onChange}
             onRelease={this.onRelease}
@@ -123,15 +233,5 @@ export default class ExampleApp extends React.PureComponent<
 
   private onRelease = (currentNode: MosaicNode<string> | null) => {
     console.log("Mosaic.onRelease():", currentNode);
-  };
-
-  private createNode = () => ++windowCount;
-
-  private autoArrange = () => {
-    const leaves = getLeaves(this.state.currentNode);
-
-    this.setState({
-      currentNode: createBalancedTreeFromLeaves(leaves)
-    });
   };
 }
