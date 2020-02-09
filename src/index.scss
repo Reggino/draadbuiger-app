@@ -30,27 +30,6 @@ body,
     margin: 0;
   }
 
-  .navbar-separator {
-    height: 20px;
-    border-left: 1px solid gray;
-    margin: 10px;
-  }
-
-  .bp3-navbar {
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .bp3-navbar-heading a {
-    color: white;
-
-    .version {
-      color: gray;
-    }
-  }
-
   > .mosaic {
     height: calc(100% - 50px);
   }

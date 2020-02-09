@@ -1,7 +1,6 @@
-import { Classes, HTMLSelect } from "@blueprintjs/core";
-import { IconNames } from "@blueprintjs/icons";
 import React from "react";
 import Old from "./Old";
+import NavBar from "./components/NavBar";
 
 import {
   createBalancedTreeFromLeaves,
@@ -17,17 +16,13 @@ import { CloseAdditionalControlsButton } from "./CloseAdditionalControlsButton";
 import "@blueprintjs/core/src/blueprint.scss";
 // import "@blueprintjs/icons/src/blueprint-icons.scss";
 import "react-mosaic-component/react-mosaic-component.css";
+import DxfProvider from "./provider/Dxf";
 // import "../styles/index.less";
 // import "./example.less";
 
 // tslint:disable no-console
 
 // tslint:disable-next-line no-var-requires
-const { version } = require("../package.json");
-
-function classNames(...args: string[]) {
-  return args.join(" ");
-}
 
 let windowCount = 3;
 
@@ -68,62 +63,9 @@ export default class ExampleApp extends React.PureComponent<
 
   render() {
     return (
-      <React.StrictMode>
+      <DxfProvider>
         <div className="react-mosaic-example-app">
-          <div className={classNames(Classes.NAVBAR, Classes.DARK)}>
-            <div className={Classes.NAVBAR_GROUP}>
-              <div className={Classes.NAVBAR_HEADING}>
-                <a href="https://bitbucket.org/Reggino/draadbuiger-app/">
-                  Draadbuiger <span className="version">v{version}</span>
-                </a>
-              </div>
-            </div>
-            <div
-              className={classNames(Classes.NAVBAR_GROUP, Classes.BUTTON_GROUP)}
-            >
-              <label
-                className={classNames(
-                  "theme-selection",
-                  Classes.LABEL,
-                  Classes.INLINE
-                )}
-              >
-                Theme:
-                <HTMLSelect
-                  value={this.state.currentTheme}
-                  onChange={e =>
-                    this.setState({
-                      currentTheme: e.currentTarget.value as Theme
-                    })
-                  }
-                >
-                  {React.Children.toArray(
-                    Object.keys(THEMES).map(label => <option>{label}</option>)
-                  )}
-                </HTMLSelect>
-              </label>
-              <div className="navbar-separator" />
-              <span className="actions-label">Example Actions:</span>
-              <button
-                className={classNames(
-                  Classes.BUTTON,
-                  Classes.iconClass(IconNames.GRID_VIEW)
-                )}
-                onClick={this.autoArrange}
-              >
-                Auto Arrange
-              </button>
-              <button
-                className={classNames(
-                  Classes.BUTTON,
-                  Classes.iconClass(IconNames.ARROW_TOP_RIGHT)
-                )}
-                onClick={this.addToTopRight}
-              >
-                Add Window to Top Right
-              </button>
-            </div>
-          </div>
+          <NavBar />
           <Mosaic<number>
             renderTile={(count, path) => {
               console.log(count, path);
@@ -164,7 +106,7 @@ export default class ExampleApp extends React.PureComponent<
             className={THEMES[this.state.currentTheme]}
           />
         </div>
-      </React.StrictMode>
+      </DxfProvider>
     );
   }
 

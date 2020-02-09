@@ -1,94 +1,29 @@
-import axios from "axios";
-import DxfParser, { DxfData } from "dxf-parser";
 import * as React from "react";
 import { InstructionGenerator } from "../inc/instructionGenerator";
 import { InstructionVisualizer } from "../inc/instructionVisualizer";
 import { createGeometry } from "../inc/wire";
 
-import "./App.css";
+import "./index.scss";
+import { DxfContext } from "../provider/Dxf";
 
-// @ts-ignore
-const parser = new DxfParser();
 const instructionGenerator = new InstructionGenerator();
 const instructionVisualizer = new InstructionVisualizer();
 
-interface AppState {
-  dxfData: DxfData;
-  entityIndex: number;
-  instructionIndex: number;
-}
-
-export default class App extends React.Component<{}, AppState> {
-  state: AppState = {
-    dxfData: { entities: [{ vertices: [], handle: "-" }] },
-    instructionIndex: 0,
-    entityIndex: 0
-  };
+export default class App extends React.Component<{}> {
+  static contextType = DxfContext;
 
   componentWillMount() {
     instructionVisualizer.start();
-    axios.get("/resources/18_veel lijnen.dxf").then(res => {
-      this.loadData(res.data);
-    });
   }
 
-  private loadData = (data: string) => {
-    const dxfData: DxfData = parser.parseSync(data);
-    if (
-      !dxfData ||
-      !dxfData.entities ||
-      !dxfData.entities.find(
-        entity => entity.vertices && entity.vertices.length > 0
-      )
-    ) {
-      window.alert("DXF niet leesbaar");
-      return;
-    }
-    const entityIndex = 0;
-    instructionVisualizer.setDxfData(dxfData);
-    instructionVisualizer.processInstruction("S");
-    this.setState({
-      dxfData,
-      entityIndex,
-      instructionIndex: 0
-    });
-  };
-
-  private onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { files } = e.target;
-    if (!files || !files.length) {
-      alert("Please select a file!");
-      return;
-    }
-    // eslint-disable-next-line prefer-destructuring
-    const file = files[0];
-    const start = 0;
-    const stop = file.size - 1;
-    const reader = new FileReader();
-
-    // If we use onloadend, we need to check the readyState.
-    reader.onloadend = (evt: any) => {
-      if (!evt.target || !evt.target.readyState) {
-        return;
-      }
-      if (evt.target.readyState === FileReader.DONE) {
-        // DONE == 2
-        this.loadData(evt.target.result);
-      }
-    };
-
-    const blob = file.slice(start, stop + 1);
-    reader.readAsBinaryString(blob);
-  };
-
   private onInstructionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { dxfData } = this.state;
+    const { dxfData, entityIndex } = this.context;
     if (!dxfData) {
       return;
     }
     const instructionIndex = parseInt(e.currentTarget.value, 10);
     instructionGenerator
-      .getInstructions(createGeometry(dxfData.entities[this.state.entityIndex]))
+      .getInstructions(createGeometry(dxfData.entities[entityIndex]))
       .slice(0, instructionIndex + 1)
       .map(instructionVisualizer.processInstruction);
     this.setState({
@@ -106,10 +41,10 @@ export default class App extends React.Component<{}, AppState> {
   };
 
   public render() {
-    const { dxfData } = this.state;
+    const { dxfData, entityIndex, instructionIndex } = this.context;
     const instructions: string[] = dxfData
       ? instructionGenerator.getInstructions(
-          createGeometry(dxfData.entities[this.state.entityIndex])
+          createGeometry(dxfData.entities[entityIndex])
         )
       : [];
     const file = instructions
@@ -120,13 +55,10 @@ export default class App extends React.Component<{}, AppState> {
         <header className="App-header">
           <h1 className="App-title">Draadbuiger</h1>
           <form>
-            <div>
-              <input type="file" onChange={this.onFileChange} />
-            </div>
             {dxfData && dxfData.entities && dxfData.entities.length ? (
               <div>
                 <select onChange={this.onWireChange}>
-                  {dxfData.entities.map((entity, key) => (
+                  {dxfData.entities.map((entity: any, key: number) => (
                     <option value={key} key={key}>
                       Draad {key} ({entity.handle})
                     </option>
@@ -150,7 +82,7 @@ export default class App extends React.Component<{}, AppState> {
                 overflow: "auto"
               }}
             >
-              {JSON.stringify(this.state.dxfData, null, "\t")}
+              {JSON.stringify(dxfData, null, "\t")}
             </pre>
           </div>
           <div className="App-column">
@@ -207,7 +139,7 @@ export default class App extends React.Component<{}, AppState> {
                       type="radio"
                       name="instruction"
                       value={key}
-                      checked={this.state.instructionIndex === key}
+                      checked={instructionIndex === key}
                       onChange={this.onInstructionChange}
                     />
                     {instruction}
