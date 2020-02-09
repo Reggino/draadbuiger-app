@@ -31,7 +31,7 @@ export default class ExampleApp extends React.PureComponent<
       },
       second: {
         direction: "column",
-        first: "test1",
+        first: "cam",
         second: "test2"
       },
       splitPercentage: 80
@@ -192,6 +192,13 @@ export default class ExampleApp extends React.PureComponent<
           </DxfContext.Consumer>
         );
         break;
+
+      case "cam":
+        return (
+          <div>
+            <img src="http://draadbuigpi/image.mjpeg" />
+          </div>
+        );
 
       default:
         return (
