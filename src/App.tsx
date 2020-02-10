@@ -1,9 +1,6 @@
 import React from "react";
 import NavBar from "./components/NavBar";
 import { Mosaic, MosaicNode, MosaicWindow } from "react-mosaic-component";
-import "@blueprintjs/core/src/blueprint.scss";
-// import "@blueprintjs/icons/src/blueprint-icons.scss";
-import "react-mosaic-component/react-mosaic-component.css";
 import DxfProvider, { DxfContext } from "./provider/Dxf";
 import { MosaicBranch } from "react-mosaic-component/src/types";
 import { createGeometry } from "./inc/wire";
