@@ -1,0 +1,12 @@
+.tiles__controls-tile__rotate-left {
+  svg {
+    transform: scaleY(-1);
+  }
+}
+
+.tiles__controls-tile__table {
+  margin: 0 auto;
+  td {
+    padding: 8px;
+  }
+}
