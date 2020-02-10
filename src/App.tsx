@@ -10,6 +10,8 @@ import { createGeometry } from "./inc/wire";
 import { InstructionGenerator } from "./inc/instructionGenerator";
 import { InstructionVisualizer } from "./inc/instructionVisualizer";
 import { Button } from "@blueprintjs/core";
+import CamTile from "./tiles/CamTile";
+
 const instructionGenerator = new InstructionGenerator();
 const instructionVisualizer = new InstructionVisualizer();
 
@@ -194,11 +196,7 @@ export default class ExampleApp extends React.PureComponent<
         break;
 
       case "cam":
-        return (
-          <div>
-            <img src="http://draadbuigpi/image.mjpeg" />
-          </div>
-        );
+        return <CamTile path={path} />;
 
       case "instructionsVisualizer":
         return (
