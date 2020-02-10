@@ -2,7 +2,7 @@ import React from "react";
 import NavBar from "./components/NavBar";
 import { Mosaic, MosaicNode, MosaicWindow } from "react-mosaic-component";
 import DxfProvider, { DxfContext } from "./provider/Dxf";
-import { MosaicBranch } from "react-mosaic-component/src/types";
+import { MosaicBranch, MosaicKey } from "react-mosaic-component/src/types";
 import { createGeometry } from "./inc/wire";
 import { InstructionGenerator } from "./inc/instructionGenerator";
 import { InstructionVisualizer } from "./inc/instructionVisualizer";
@@ -13,8 +13,15 @@ const instructionGenerator = new InstructionGenerator();
 const instructionVisualizer = new InstructionVisualizer();
 
 export interface ExampleAppState {
-  currentNode: MosaicNode<string> | null;
+  currentNode: MosaicNode<TDraadbuigerMosaicKey> | null;
 }
+
+type TDraadbuigerMosaicKey =
+  | "dxfData"
+  | "instructions"
+  | "cam"
+  | "instructionsVisualizer"
+  | "manualControl";
 
 export default class ExampleApp extends React.PureComponent<
   {},
@@ -23,17 +30,22 @@ export default class ExampleApp extends React.PureComponent<
   state: ExampleAppState = {
     currentNode: {
       direction: "row",
-      first: {
-        direction: "row",
-        first: "dxfData",
-        second: "instructions"
-      },
+      first: "instructionsVisualizer",
       second: {
-        direction: "column",
-        first: "cam",
-        second: "instructionsVisualizer"
+        direction: "row",
+        first: {
+          direction: "column",
+          first: "dxfData",
+          second: "instructions"
+        },
+        second: {
+          direction: "column",
+          first: "cam",
+          second: "manualControl",
+          splitPercentage: 40
+        }
       },
-      splitPercentage: 80
+      splitPercentage: 60
     }
   };
 
@@ -224,7 +236,9 @@ export default class ExampleApp extends React.PureComponent<
     );
   }
 
-  private onChange = (currentNode: MosaicNode<string> | null) => {
+  private onChange = (
+    currentNode: MosaicNode<TDraadbuigerMosaicKey> | null
+  ) => {
     this.setState({ currentNode });
   };
 
