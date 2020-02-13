@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import DxfParser, { DxfData } from "dxf-parser";
+import { AppToaster } from "../inc/toaster";
 
 const parser = new DxfParser();
 
@@ -25,9 +26,14 @@ const DxfProvider = ({ children }: { children: any }) => {
   const [instructionIndex, setInstructionIndex] = useState(0);
 
   const setDxfDataFromText = (dxfString: string) => {
-    setDxfData(parser.parseSync(dxfString));
-    setEntityIndex(0);
-    setInstructionIndex(0);
+    try {
+      setDxfData(parser.parseSync(dxfString));
+      setEntityIndex(0);
+      setInstructionIndex(0);
+      AppToaster.show({ message: "Bestand is ingelezen", intent: "success" });
+    } catch (e) {
+      AppToaster.show({ message: e.message, intent: "danger" });
+    }
   };
 
   useEffect(() => {
