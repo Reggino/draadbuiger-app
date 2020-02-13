@@ -57,7 +57,7 @@ export default class ExampleApp extends React.PureComponent<{}, IAppState> {
   render() {
     return (
       <DxfProvider>
-        <div className="react-mosaic-example-app">
+        <div className="app">
           <NavBar />
           <Mosaic
             renderTile={this.renderTile}
