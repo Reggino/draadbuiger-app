@@ -38,7 +38,7 @@ export default ({ path }: ITileProps) => {
             text={"Downloaden"}
             style={{ display: "block", margin: "8px auto" }}
             onClick={() => {
-              window.location.href = URL.createObjectURL(file);
+              window.open(URL.createObjectURL(file));
             }}
           />
         ) : null}
